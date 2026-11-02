@@ -101,6 +101,9 @@
     </div>
   </div>
   <div class="flex-1 min-h-0 p-4">
+    <%!-- An id of its own: a live navigation from a static graph tab would
+         otherwise reuse that tab's container, and keep its classes, as LiveView
+         patches only the data attributes of an element it ignores. --%>
     <.viz
       graph={
         Graph.DOT.to_dot(@zoom_subgraph,
@@ -110,7 +113,7 @@
         )
       }
       tooltips={Clarity.Tooltip.hints(Graph.vertices(@zoom_subgraph))}
-      id="content-view-viz"
+      id="graph-navigation-viz"
       class="h-full"
     />
   </div>
