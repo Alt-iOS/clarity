@@ -1,6 +1,7 @@
 import { panZoom } from "./pan-zoom";
 import { onThemeChange, getCurrentTheme } from "./theme";
 import { cacheKey, getSvg, putSvg } from "./svg-cache";
+import { showError } from "./diagram-error";
 
 const getMermaidTheme = (theme) => {
   return theme === 'dark' ? 'dark' : 'default';
@@ -10,7 +11,12 @@ const getMermaidTheme = (theme) => {
 // the first diagram renders, and each kind of diagram loads as it's drawn.
 let loaded;
 const loadMermaid = () =>
-  (loaded ||= import("mermaid").then(({ default: mermaid }) => mermaid));
+  (loaded ||= import("mermaid")
+    .then(({ default: mermaid }) => mermaid)
+    .catch((error) => {
+      loaded = null;
+      throw error;
+    }));
 
 const initialize = (mermaid, theme) =>
   mermaid.initialize({
@@ -53,9 +59,15 @@ export default {
 
     let svgRaw = getSvg(key);
     if (!svgRaw) {
-      const mermaid = await loadMermaid();
-      initialize(mermaid, mermaidTheme);
-      ({ svg: svgRaw } = await mermaid.render(`${this.el.id}_content`, graph));
+      try {
+        const mermaid = await loadMermaid();
+        initialize(mermaid, mermaidTheme);
+        ({ svg: svgRaw } = await mermaid.render(`${this.el.id}_content`, graph));
+      } catch (error) {
+        this.renderedKey = key;
+        showError(this.el, error);
+        return;
+      }
       putSvg(key, svgRaw);
     }
 

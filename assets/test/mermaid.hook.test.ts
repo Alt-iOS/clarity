@@ -9,7 +9,10 @@ vi.mock("svg-pan-zoom", () => ({ default: svgPanZoom }));
 vi.mock("mermaid", () => ({
   default: {
     initialize: vi.fn(),
-    render: vi.fn(async () => ({ svg: '<svg viewBox="0 0 10 10"></svg>' })),
+    render: vi.fn(async (_id: string, graph: string) => {
+      if (graph.includes("oops")) throw new Error("Parse error on line 2: oops");
+      return { svg: '<svg viewBox="0 0 10 10"></svg>' };
+    }),
   },
 }));
 
@@ -42,5 +45,18 @@ describe("render", () => {
 
     expect(svgPanZoom).not.toHaveBeenCalled();
     expect(hook.el.querySelector("svg").getAttribute("preserveAspectRatio")).toBe("xMidYMid meet");
+  });
+});
+
+describe("a diagram that can't be drawn", () => {
+  it("shows why, rather than rendering forever", async () => {
+    const hook = hookFor("broken", { graph: "stateDiagram-v2\n  oops" });
+
+    await hook.render();
+
+    const error = hook.el.querySelector(".diagram-error[role=alert]");
+    expect(error.textContent).toContain("couldn't be drawn");
+    expect(error.textContent).toContain("Parse error on line 2");
+    expect(svgPanZoom).not.toHaveBeenCalled();
   });
 });

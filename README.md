@@ -98,6 +98,8 @@ end
 
 Replace `:my_app` with your OTP application name. This assumes your router already defines a `:browser` pipeline and your Phoenix endpoint has a LiveView socket at `/live`.
 
+If your `:browser` pipeline sets a Content Security Policy, its `script-src` must allow `'wasm-unsafe-eval'`: Clarity draws graphs with Graphviz, compiled to WebAssembly. Without it, a graph shows that the policy blocked it.
+
 For automatic re-introspection on recompilation, also add `Clarity.CodeReloader` to your Mix project's existing `:listeners` list (the Igniter installer does this for you). If mounting outside the standard LiveView socket path, see [`Clarity.Router`](https://hexdocs.pm/clarity/Clarity.Router.html) for `:live_socket_path` and other options.
 
 **Do not expose Clarity publicly without access controls.** The explorer can reveal application structure, authorization rules, and dependency details. Prefer development-only routing; if you need another environment, protect the route with authentication and appropriate network restrictions. Use the `:on_mount` router option to attach LiveView authorization hooks where necessary.

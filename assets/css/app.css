@@ -280,6 +280,16 @@ pre:is([phx-hook="Mermaid"], [phx-hook="Viz"]):empty::before {
   animation: clarity-fade-in 200ms ease-out 400ms both;
 }
 
+/* In place of a diagram that couldn't be drawn (assets/js/diagram-error.js). */
+.diagram-error {
+  @apply mx-auto flex h-full min-h-32 max-w-prose flex-col items-center justify-center gap-1 text-center font-sans text-sm whitespace-normal;
+  @apply text-base-light-600 dark:text-base-dark-300;
+}
+
+.diagram-error-title {
+  @apply font-medium text-base-light-900 dark:text-base-dark-100;
+}
+
 /* Zoom controls in a pannable diagram's corner (assets/js/pan-zoom.js). */
 pre:is([phx-hook="Mermaid"], [phx-hook="Viz"]) {
   position: relative;

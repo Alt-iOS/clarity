@@ -1,14 +1,21 @@
 import { panZoom } from "./pan-zoom";
 import { applyHints } from "./tooltip.hook";
 import { cacheKey, getSvg, putSvg } from "./svg-cache";
+import { showError } from "./diagram-error";
 
 const XLINK = "http://www.w3.org/1999/xlink";
 
 // Graphviz is a megabyte of WebAssembly, so it loads, in a chunk of its own,
-// when the first graph renders; every graph shares the one instance.
+// when the first graph renders; every graph shares the one instance. One
+// that failed to load is tried again for the next graph.
 let instance;
 const viz = () =>
-  (instance ||= import("@viz-js/viz").then((Viz) => Viz.instance()));
+  (instance ||= import("@viz-js/viz")
+    .then((Viz) => Viz.instance())
+    .catch((error) => {
+      instance = null;
+      throw error;
+    }));
 
 export default {
   async mounted() {
@@ -32,7 +39,15 @@ export default {
     const key = cacheKey(this.el.id, graph);
     if (key === this.renderedKey) return;
 
-    const svg = await this.svgFor(key, graph);
+    let svg;
+    try {
+      svg = await this.svgFor(key, graph);
+    } catch (error) {
+      this.renderedKey = key;
+      this.oldSvg = null;
+      showError(this.el, error);
+      return;
+    }
     this.renderedKey = key;
 
     // A diagram among an overview's sections (data-pan-zoom="false") keeps
@@ -62,6 +77,7 @@ export default {
 
     applyHints(svg, JSON.parse(this.el.dataset.tooltips || "{}"));
 
+    this.el.querySelector(":scope > .diagram-error")?.remove();
     if(this.oldSvg) {
       this.oldSvg.remove();
     }
