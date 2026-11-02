@@ -36,15 +36,12 @@ export default {
     this.renderedKey = key;
 
     // A diagram among an overview's sections (data-pan-zoom="false") keeps
-    // its own size, shrinking to fit, so scrolling the page over it scrolls.
+    // its own size, shrinking to fit, so scrolling the page over it scrolls;
+    // any other is sized by panZoom.
     const fixed = this.el.dataset.panZoom === "false";
     if (fixed) {
       svg.style.maxWidth = "100%";
       svg.style.height = "auto";
-    } else {
-      svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
-      svg.setAttribute("width", "100%");
-      svg.setAttribute("height", "100%");
     }
 
     // A click opens the vertex in the graph, or with data-event, sends that.

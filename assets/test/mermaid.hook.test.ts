@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mermaid and svg-pan-zoom need real layout, so stand in for both.
-const { svgPanZoom } = vi.hoisted(() => ({
-  svgPanZoom: vi.fn(() => ({ resize: vi.fn() })),
+// Mermaid needs real layout, so stand in for it, and for panning and zooming
+// (see pan-zoom.test.ts).
+const { panZoom } = vi.hoisted(() => ({
+  panZoom: vi.fn(() => ({ resize: vi.fn() })),
 }));
 
-vi.mock("svg-pan-zoom", () => ({ default: svgPanZoom }));
+vi.mock("../js/pan-zoom.js", () => ({ panZoom }));
 vi.mock("mermaid", () => ({
   default: {
     initialize: vi.fn(),
@@ -23,7 +24,7 @@ function hookFor(id: string, data: Record<string, string> = {}) {
   return Object.assign(Object.create(Mermaid), { el });
 }
 
-beforeEach(() => svgPanZoom.mockClear());
+beforeEach(() => panZoom.mockClear());
 
 describe("render", () => {
   it("lets the user pan and zoom a diagram", async () => {
@@ -31,8 +32,7 @@ describe("render", () => {
 
     await hook.render();
 
-    expect(svgPanZoom).toHaveBeenCalledOnce();
-    expect(hook.el.querySelector("svg").getAttribute("preserveAspectRatio")).toBe("xMidYMid slice");
+    expect(panZoom).toHaveBeenCalledExactlyOnceWith(hook.el, hook.el.querySelector("svg"));
   });
 
   it("fits a diagram that opts out of pan and zoom to its box", async () => {
@@ -40,7 +40,7 @@ describe("render", () => {
 
     await hook.render();
 
-    expect(svgPanZoom).not.toHaveBeenCalled();
+    expect(panZoom).not.toHaveBeenCalled();
     expect(hook.el.querySelector("svg").getAttribute("preserveAspectRatio")).toBe("xMidYMid meet");
   });
 });

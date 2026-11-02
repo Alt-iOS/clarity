@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Graphviz and svg-pan-zoom need WebAssembly and real layout, so stand in
-// for both: the graph renders as one linked node.
-const { svgPanZoom } = vi.hoisted(() => ({
-  svgPanZoom: vi.fn(() => ({ resize: vi.fn() })),
+// Graphviz needs WebAssembly, so stand in for it: the graph renders as one
+// linked node. Panning and zooming has tests of its own (pan-zoom.test.ts).
+const { panZoom } = vi.hoisted(() => ({
+  panZoom: vi.fn(() => ({ resize: vi.fn() })),
 }));
 
-vi.mock("svg-pan-zoom", () => ({ default: svgPanZoom }));
+vi.mock("../js/pan-zoom.js", () => ({ panZoom }));
 vi.mock("@viz-js/viz", () => ({
   instance: async () => ({
     renderSVGElement: () =>
@@ -27,7 +27,7 @@ function hookFor(id: string, data: Record<string, string> = {}) {
   return Object.assign(Object.create(Viz), { el, pushEvent: vi.fn() });
 }
 
-beforeEach(() => svgPanZoom.mockClear());
+beforeEach(() => panZoom.mockClear());
 
 describe("render", () => {
   it("lets the user pan and zoom a graph, and opens a clicked vertex in the graph", async () => {
@@ -36,8 +36,7 @@ describe("render", () => {
     await hook.render();
     hook.el.querySelector("a").dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
-    expect(svgPanZoom).toHaveBeenCalledOnce();
-    expect(hook.el.querySelector("svg").getAttribute("width")).toBe("100%");
+    expect(panZoom).toHaveBeenCalledExactlyOnceWith(hook.el, hook.el.querySelector("svg"));
     expect(hook.pushEvent).toHaveBeenCalledWith("viz:click", { id: "ash-attribute:demo-x:y" });
   });
 
@@ -48,7 +47,7 @@ describe("render", () => {
     hook.el.querySelector("a").dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     const svg = hook.el.querySelector("svg");
-    expect(svgPanZoom).not.toHaveBeenCalled();
+    expect(panZoom).not.toHaveBeenCalled();
     expect(svg.getAttribute("width")).toBe("80pt");
     expect(svg.style.maxWidth).toBe("100%");
     expect(hook.pushEvent).toHaveBeenCalledWith("viz:open", { id: "ash-attribute:demo-x:y" });

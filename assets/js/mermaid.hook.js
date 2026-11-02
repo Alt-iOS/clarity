@@ -64,18 +64,17 @@ export default {
 
     const svg = this.el.querySelector("svg");
 
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
     svg.setAttribute("style", "");
 
     // A small diagram among others (data-pan-zoom="false") just fits its box,
-    // so scrolling the page over it scrolls rather than zooms.
+    // so scrolling the page over it scrolls rather than zooms; any other is
+    // sized by panZoom.
     if (this.el.dataset.panZoom === "false") {
+      svg.setAttribute("width", "100%");
+      svg.setAttribute("height", "100%");
       svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
       return;
     }
-
-    svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
 
     const zoom = panZoom(this.el, svg);
 
