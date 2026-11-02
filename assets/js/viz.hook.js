@@ -1,14 +1,9 @@
 import { panZoom } from "./pan-zoom";
 import { applyHints } from "./tooltip.hook";
 import { cacheKey, getSvg, putSvg } from "./svg-cache";
+import { renderSvg } from "./graphviz";
 
 const XLINK = "http://www.w3.org/1999/xlink";
-
-// Graphviz is a megabyte of WebAssembly, so it loads, in a chunk of its own,
-// when the first graph renders; every graph shares the one instance.
-let instance;
-const viz = () =>
-  (instance ||= import("@viz-js/viz").then((Viz) => Viz.instance()));
 
 export default {
   async mounted() {
@@ -78,14 +73,13 @@ export default {
   },
 
   async svgFor(key, graph) {
-    const cached = getSvg(key);
-    if (cached) {
-      const parsed = new DOMParser().parseFromString(cached, "image/svg+xml");
-      return document.importNode(parsed.documentElement, true);
+    let source = getSvg(key);
+    if (!source) {
+      source = await renderSvg(graph);
+      putSvg(key, source);
     }
 
-    const svg = (await viz()).renderSVGElement(graph);
-    putSvg(key, new XMLSerializer().serializeToString(svg));
-    return svg;
+    const parsed = new DOMParser().parseFromString(source, "image/svg+xml");
+    return document.importNode(parsed.documentElement, true);
   },
 };

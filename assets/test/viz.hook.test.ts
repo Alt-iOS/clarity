@@ -1,20 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Graphviz and svg-pan-zoom need WebAssembly and real layout, so stand in
-// for both: the graph renders as one linked node.
+// Graphviz (graphviz.test.ts) and svg-pan-zoom need WebAssembly and real
+// layout, so stand in for both: the graph renders as one linked node.
 const { svgPanZoom } = vi.hoisted(() => ({
   svgPanZoom: vi.fn(() => ({ resize: vi.fn() })),
 }));
 
 vi.mock("svg-pan-zoom", () => ({ default: svgPanZoom }));
-vi.mock("@viz-js/viz", () => ({
-  instance: async () => ({
-    renderSVGElement: () =>
-      new DOMParser().parseFromString(
-        '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="80pt" height="40pt"><a xlink:href="#ash-attribute:demo-x:y"><text>y</text></a></svg>',
-        "image/svg+xml",
-      ).documentElement,
-  }),
+vi.mock("../js/graphviz.js", () => ({
+  renderSvg: async () =>
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="80pt" height="40pt"><a xlink:href="#ash-attribute:demo-x:y"><text>y</text></a></svg>',
 }));
 
 import Viz from "../js/viz.hook.js";
