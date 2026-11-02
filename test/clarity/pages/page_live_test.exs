@@ -94,7 +94,7 @@ defmodule Clarity.Pages.PageLiveTest do
       assert has_element?(view, ".content")
 
       # Should render the graph visualization
-      assert has_element?(view, "#content-view-viz")
+      assert has_element?(view, "#graph-navigation-viz")
     end
 
     test "can toggle navigation visibility", %{conn: conn} do
@@ -172,7 +172,7 @@ defmodule Clarity.Pages.PageLiveTest do
       render_async(view)
 
       # Test viz:click event with a known vertex ID from our test helper
-      view |> element("#content-view-viz") |> render_hook("viz:click", %{"id" => "application:clarity"})
+      view |> element("#graph-navigation-viz") |> render_hook("viz:click", %{"id" => "application:clarity"})
 
       # Should navigate to the clicked vertex
       assert_patched(view, "/clarity/graph/application:clarity/graph")
@@ -183,7 +183,7 @@ defmodule Clarity.Pages.PageLiveTest do
       render_async(view)
 
       # Test viz:click event with domain vertex
-      view |> element("#content-view-viz") |> render_hook("viz:click", %{"id" => "ash-domain:demo-accounts"})
+      view |> element("#graph-navigation-viz") |> render_hook("viz:click", %{"id" => "ash-domain:demo-accounts"})
 
       # Should navigate to the domain vertex
       assert_patched(view, "/clarity/graph/ash-domain:demo-accounts/graph")
@@ -194,10 +194,10 @@ defmodule Clarity.Pages.PageLiveTest do
       render_async(view)
 
       # Should render the graph visualization element
-      assert has_element?(view, "#content-view-viz")
+      assert has_element?(view, "#graph-navigation-viz")
 
       # The graph content should be present
-      viz_content = view |> element("#content-view-viz") |> render()
+      viz_content = view |> element("#graph-navigation-viz") |> render()
       assert viz_content =~ "digraph" or viz_content =~ "svg"
     end
   end
@@ -248,7 +248,7 @@ defmodule Clarity.Pages.PageLiveTest do
 
       hints =
         view
-        |> element("#content-view-viz")
+        |> element("#graph-navigation-viz")
         |> render()
         |> LazyHTML.from_fragment()
         |> LazyHTML.attribute("data-tooltips")
@@ -427,7 +427,7 @@ defmodule Clarity.Pages.PageLiveTest do
       html = render_async(view)
 
       # Should render viz content by default (Graph Navigation)
-      assert has_element?(view, "#content-view-viz")
+      assert has_element?(view, "#graph-navigation-viz")
       assert html =~ "Graph Navigation"
     end
 
@@ -461,7 +461,7 @@ defmodule Clarity.Pages.PageLiveTest do
       render_async(view)
 
       # Navigate to application vertex
-      view |> element("#content-view-viz") |> render_hook("viz:click", %{"id" => "application:clarity"})
+      view |> element("#graph-navigation-viz") |> render_hook("viz:click", %{"id" => "application:clarity"})
       assert_patched(view, "/clarity/graph/application:clarity/graph")
 
       # Content should update for the new vertex

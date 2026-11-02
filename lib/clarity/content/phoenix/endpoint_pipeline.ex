@@ -650,12 +650,12 @@ with {:module, Phoenix.Endpoint} <- Code.ensure_loaded(Phoenix.Endpoint) do
           ]
 
         endpoint ->
-          endpoint
-          |> read_endpoint(links)
-          |> Keyword.merge(
+          read = read_endpoint(endpoint, links)
+
+          Keyword.merge(read,
             router?: true,
             doc: moduledoc(router),
-            routers: [router(router, endpoint.host())]
+            routers: [router(router, read[:host])]
           )
       end
     end
@@ -688,22 +688,24 @@ with {:module, Phoenix.Endpoint} <- Code.ensure_loaded(Phoenix.Endpoint) do
     defp subject(%RouterVertex{router: router}), do: router
 
     # What the tab shows of an endpoint: its plugs (nil when they can't be
-    # read), sockets and routers, each with its pipelines and routes.
+    # read), sockets and routers, each with its pipelines and routes. Its URL,
+    # host and configuration are only there while it runs.
     @spec read_endpoint(module(), map()) :: keyword()
     defp read_endpoint(endpoint, links) do
       plugs = Pipeline.plugs(endpoint)
-      host = endpoint.host()
+      running? = Endpoint.running?(endpoint)
+      host = if running?, do: endpoint.host()
       routers = endpoint |> routers(plugs) |> Enum.map(&router(&1, host))
 
       [
         endpoint: endpoint,
         doc: moduledoc(endpoint),
-        url: endpoint.url(),
+        url: Endpoint.url(endpoint),
         app_name: Clarity.Config.application_of(endpoint),
         app: app(endpoint, links),
         host: host,
-        code_reloading?: endpoint.config(:code_reloader) == true,
-        error_formats: error_formats(endpoint),
+        code_reloading?: running? and endpoint.config(:code_reloader) == true,
+        error_formats: if(running?, do: error_formats(endpoint), else: []),
         sockets: endpoint.__sockets__(),
         steps: steps(plugs, routers),
         routers: routers,

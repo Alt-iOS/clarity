@@ -2,20 +2,9 @@ import { panZoom } from "./pan-zoom";
 import { applyHints } from "./tooltip.hook";
 import { cacheKey, getSvg, putSvg } from "./svg-cache";
 import { showError } from "./diagram-error";
+import { renderSvg } from "./graphviz";
 
 const XLINK = "http://www.w3.org/1999/xlink";
-
-// Graphviz is a megabyte of WebAssembly, so it loads, in a chunk of its own,
-// when the first graph renders; every graph shares the one instance. One
-// that failed to load is tried again for the next graph.
-let instance;
-const viz = () =>
-  (instance ||= import("@viz-js/viz")
-    .then((Viz) => Viz.instance())
-    .catch((error) => {
-      instance = null;
-      throw error;
-    }));
 
 export default {
   async mounted() {
@@ -51,15 +40,12 @@ export default {
     this.renderedKey = key;
 
     // A diagram among an overview's sections (data-pan-zoom="false") keeps
-    // its own size, shrinking to fit, so scrolling the page over it scrolls.
+    // its own size, shrinking to fit, so scrolling the page over it scrolls;
+    // any other is sized by panZoom.
     const fixed = this.el.dataset.panZoom === "false";
     if (fixed) {
       svg.style.maxWidth = "100%";
       svg.style.height = "auto";
-    } else {
-      svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
-      svg.setAttribute("width", "100%");
-      svg.setAttribute("height", "100%");
     }
 
     // A click opens the vertex in the graph, or with data-event, sends that.
@@ -94,14 +80,13 @@ export default {
   },
 
   async svgFor(key, graph) {
-    const cached = getSvg(key);
-    if (cached) {
-      const parsed = new DOMParser().parseFromString(cached, "image/svg+xml");
-      return document.importNode(parsed.documentElement, true);
+    let source = getSvg(key);
+    if (!source) {
+      source = await renderSvg(graph);
+      putSvg(key, source);
     }
 
-    const svg = (await viz()).renderSVGElement(graph);
-    putSvg(key, new XMLSerializer().serializeToString(svg));
-    return svg;
+    const parsed = new DOMParser().parseFromString(source, "image/svg+xml");
+    return document.importNode(parsed.documentElement, true);
   },
 };

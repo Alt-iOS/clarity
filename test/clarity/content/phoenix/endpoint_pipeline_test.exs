@@ -51,6 +51,21 @@ with {:module, Phoenix.Endpoint} <- Code.ensure_loaded(Phoenix.Endpoint) do
       end
     end
 
+    defmodule Stopped do
+      @moduledoc false
+      use Phoenix.Endpoint, otp_app: :clarity
+    end
+
+    describe "render an endpoint that isn't running" do
+      # Such as a dependency's, which can't read its configuration.
+      test "shows what it can, without a URL" do
+        html = render_overview(EndpointPipeline, %Endpoint{endpoint: Stopped})
+
+        assert LazyHTML.text(html) =~ "router pipelines and routes are below"
+        refute text(html, ".ov-facts") =~ "URL"
+      end
+    end
+
     describe "render" do
       test "leads with how many plugs the endpoint runs, and the router it hands requests to" do
         html = render_overview(EndpointPipeline, @endpoint_vertex)

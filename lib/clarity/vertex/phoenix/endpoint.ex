@@ -10,6 +10,18 @@ defmodule Clarity.Vertex.Phoenix.Endpoint do
   @enforce_keys [:endpoint]
   defstruct [:endpoint]
 
+  @doc """
+  Whether `endpoint` is running. An endpoint keeps its configuration where
+  it put it when it started, so one that isn't running, such as a
+  dependency's that the application doesn't start, can't read it.
+  """
+  @spec running?(module()) :: boolean()
+  def running?(endpoint), do: is_pid(Process.whereis(endpoint))
+
+  @doc "The endpoint's URL, or `nil` if it isn't running."
+  @spec url(module()) :: String.t() | nil
+  def url(endpoint), do: if(running?(endpoint), do: endpoint.url())
+
   defimpl Clarity.Vertex do
     alias Clarity.Vertex.Util
 
@@ -43,7 +55,7 @@ defmodule Clarity.Vertex.Phoenix.Endpoint do
   defimpl Clarity.Vertex.TooltipProvider do
     @impl Clarity.Vertex.TooltipProvider
     def tooltip(%@for{endpoint: module}),
-      do: ["`", inspect(module), "`\n\n", "URL: ", module.url()]
+      do: ["`", inspect(module), "`\n\n", "URL: ", @for.url(module) || "not running"]
   end
 
   defimpl Clarity.Vertex.HintProvider do
@@ -54,6 +66,6 @@ defmodule Clarity.Vertex.Phoenix.Endpoint do
     def badges(_vertex), do: []
 
     @impl HintProvider
-    def facts(%@for{endpoint: module}), do: [{"URL", module.url()}]
+    def facts(%@for{endpoint: module}), do: [{"URL", @for.url(module) || "not running"}]
   end
 end

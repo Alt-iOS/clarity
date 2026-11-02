@@ -82,4 +82,29 @@ defmodule Clarity.Vertex.Phoenix.EndpointTest do
       assert Vertex.HintProvider.facts(vertex) == [{"URL", DemoWeb.Endpoint.url()}]
     end
   end
+
+  # A dependency's endpoint the application doesn't start, such as a dev
+  # tool's: it can't read its configuration, and once crashed the page that
+  # showed it in a graph.
+  defmodule Stopped do
+    @moduledoc false
+    use Phoenix.Endpoint, otp_app: :clarity
+  end
+
+  describe "an endpoint that isn't running" do
+    setup do
+      {:ok, vertex: %Endpoint{endpoint: Stopped}}
+    end
+
+    test "has no URL" do
+      refute Endpoint.running?(Stopped)
+      assert Endpoint.url(Stopped) == nil
+      assert Endpoint.url(DemoWeb.Endpoint) == DemoWeb.Endpoint.url()
+    end
+
+    test "says so in its tooltip and hint", %{vertex: vertex} do
+      assert vertex |> Vertex.TooltipProvider.tooltip() |> IO.iodata_to_binary() =~ "URL: not running"
+      assert Vertex.HintProvider.facts(vertex) == [{"URL", "not running"}]
+    end
+  end
 end
